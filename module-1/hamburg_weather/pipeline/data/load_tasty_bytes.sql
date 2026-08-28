@@ -28,7 +28,7 @@ CREATE OR ALTER SCHEMA {{env}}_tasty_bytes.analytics;
 
 -- create warehouse for ingestion
 CREATE OR REPLACE WAREHOUSE demo_build_wh
-   WAREHOUSE_SIZE = 'xlarge'
+   WAREHOUSE_SIZE = 'xsmall'
    WAREHOUSE_TYPE = 'standard'
    AUTO_SUSPEND = 60
    AUTO_RESUME = TRUE
