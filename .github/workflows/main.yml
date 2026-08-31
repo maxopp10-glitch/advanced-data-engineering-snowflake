@@ -5,6 +5,8 @@ on:
     branches:
       - staging
       - main
+    paths:
+      - "module-1/hamburg_weather/pipeline/data/**"
 
 jobs:
   deploy_data_environment:
@@ -51,4 +53,3 @@ jobs:
           snow sql \
             -f /tmp/load_tasty_bytes.sql \
             --connection advanced_data_engineering_snowflake
-            
