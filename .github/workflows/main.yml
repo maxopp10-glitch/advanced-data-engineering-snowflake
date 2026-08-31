@@ -1,0 +1,54 @@
+name: Deploy Templatized Data Environment
+
+on:
+  push:
+    branches:
+      - staging
+      - main
+
+jobs:
+  deploy_data_environment:
+    runs-on: ubuntu-latest
+
+    env:
+      SNOWFLAKE_CONNECTIONS_ADVANCED_DATA_ENGINEERING_SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_CONNECTIONS_ADVANCED_DATA_ENGINEERING_SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+      SNOWFLAKE_CONNECTIONS_ADVANCED_DATA_ENGINEERING_SNOWFLAKE_PASSWORD: ${{ secrets.SNOWFLAKE_PASSWORD }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set environment
+        run: |
+          if [[ "${GITHUB_REF_NAME}" == "staging" ]]; then
+            echo "DEPLOY_ENV=staging" >> $GITHUB_ENV
+            echo "Environment set to staging"
+          elif [[ "${GITHUB_REF_NAME}" == "main" ]]; then
+            echo "DEPLOY_ENV=prod" >> $GITHUB_ENV
+            echo "Environment set to production"
+          else
+            echo "Unexpected branch: ${GITHUB_REF_NAME}"
+            exit 1
+          fi
+
+      - name: Install Snowflake CLI
+        uses: snowflakedb/snowflake-cli-action@v1.5
+        with:
+          cli-version: "latest"
+          default-config-file-path: "config.toml"
+
+      - name: Render environment template
+        run: |
+          sed "s/{{env}}/${DEPLOY_ENV}/g" \
+            module-1/hamburg_weather/pipeline/data/load_tasty_bytes.sql \
+            > /tmp/load_tasty_bytes.sql
+
+          echo "Rendered SQL for environment: ${DEPLOY_ENV}"
+
+      - name: Deploy data environment
+        run: |
+          snow sql \
+            -f /tmp/load_tasty_bytes.sql \
+            --connection advanced_data_engineering_snowflake
+            
